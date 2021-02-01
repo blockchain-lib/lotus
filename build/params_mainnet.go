@@ -6,52 +6,50 @@
 package build
 
 import (
-	"os"
-
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/lotus/chain/actors/policy"
-	builtin2 "github.com/filecoin-project/specs-actors/v2/actors/builtin"
+	"github.com/filecoin-project/specs-actors/actors/builtin/miner"
+	miner2 "github.com/filecoin-project/specs-actors/v2/actors/builtin/miner"
+	"os"
 )
 
+const BootstrappersFile = ""
+const GenesisFile = ""
+
+const UpgradeBreezeHeight = -1
+const BreezeGasTampingDuration = 0
+
+const UpgradeSmokeHeight = -1
+const UpgradeIgnitionHeight = -2
+const UpgradeRefuelHeight = -3
+const UpgradeTapeHeight = -4
+
+const UpgradeActorsV2Height = 10
+const UpgradeLiftoffHeight = -5
+
+const UpgradeKumquatHeight = 15
+const UpgradeCalicoHeight = 20
+const UpgradePersianHeight = 25
+const UpgradeOrangeHeight = 27
+const UpgradeClausHeight = 30
+
 var DrandSchedule = map[abi.ChainEpoch]DrandEnum{
-	0:                  DrandIncentinet,
-	UpgradeSmokeHeight: DrandMainnet,
+	0: DrandMainnet,
 }
 
-const BootstrappersFile = "mainnet.pi"
-const GenesisFile = "mainnet.car"
-
-const UpgradeBreezeHeight = 41280
-
-const BreezeGasTampingDuration = 120
-
-const UpgradeSmokeHeight = 51000
-
-const UpgradeIgnitionHeight = 94000
-const UpgradeRefuelHeight = 130800
-
-const UpgradeActorsV2Height = 138720
-
-const UpgradeTapeHeight = 140760
-
-// This signals our tentative epoch for mainnet launch. Can make it later, but not earlier.
-// Miners, clients, developers, custodians all need time to prepare.
-// We still have upgrades and state changes to do, but can happen after signaling timing here.
-const UpgradeLiftoffHeight = 148888
-
-const UpgradeKumquatHeight = 170000
-
-const UpgradeCalicoHeight = 265200
-const UpgradePersianHeight = UpgradeCalicoHeight + (builtin2.EpochsInHour * 60)
-
-const UpgradeOrangeHeight = 336458
-
-// 2020-12-22T02:00:00Z
-const UpgradeClausHeight = 343200
-
 func init() {
-	policy.SetConsensusMinerMinPower(abi.NewStoragePower(10 << 40))
+	policy.SetSupportedProofTypes(
+		abi.RegisteredSealProof_StackedDrg2KiBV1,
+		abi.RegisteredSealProof_StackedDrg512MiBV1,
+		abi.RegisteredSealProof_StackedDrg32GiBV1,
+		abi.RegisteredSealProof_StackedDrg64GiBV1,
+	)
+	policy.SetConsensusMinerMinPower(abi.NewStoragePower(2048))
+	policy.SetMinVerifiedDealSize(abi.NewStoragePower(256))
+
+	miner.PreCommitChallengeDelay = abi.ChainEpoch(10)
+	miner2.PreCommitChallengeDelay = abi.ChainEpoch(10)
 
 	if os.Getenv("LOTUS_USE_TEST_ADDRESSES") != "1" {
 		SetAddressNetwork(address.Mainnet)
@@ -60,9 +58,17 @@ func init() {
 	Devnet = false
 }
 
-const BlockDelaySecs = uint64(builtin2.EpochDurationSeconds)
+const BlockDelaySecs = uint64(20)
 
-const PropagationDelaySecs = uint64(6)
+const PropagationDelaySecs = uint64(5)
 
-// BootstrapPeerThreshold is the minimum number peers we need to track for a sync worker to start
-const BootstrapPeerThreshold = 4
+// SlashablePowerDelay is the number of epochs after ElectionPeriodStart, after
+// which the miner is slashed
+//
+// Epochs
+const SlashablePowerDelay = 20
+
+// Epochs
+const InteractivePoRepConfidence = 6
+
+const BootstrapPeerThreshold = 1
